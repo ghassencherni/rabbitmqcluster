@@ -1,0 +1,58 @@
+- name: Create redis bridge network
+  docker_network:
+    name: "rabbit_bridge"
+    ipam_options:
+      subnet: "{{ bridge_subnet }}"
+      gateway: "{{ bridge_gateway }}"
+
+#Start one RabbitMQ 1
+- name: Start RabbitMQ1 container
+  docker_container:
+    name: "rabbitmq1"
+    recreate: yes
+    image: "rabbitmq:3.5.3-management"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - name: "rabbit_bridge"
+        ipv4_address: "172.20.0.2"
+  
+  
+#Start one RabbitMQ 2 container 
+- name: Start RabbitMQ2 container
+  docker_container:
+    name: "rabbitmq2"
+    recreate: yes
+    image: "rabbitmq:3.5.3-management"
+    links:
+      - rabbitmq1
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    networks:
+      - name: "rabbit_bridge"
+        ipv4_address: "172.20.0.3" 
+    env:
+      ERLANG_COOKIE: "abcdefg"
+      CLUSTER_WITH: "rabbitmq1"
+      ENABLE_RAM: "true"
+  
+#Start one RabbitMQ 3 
+- name: Start RabbitMQ3 container
+  docker_container:
+    name: "rabbitmq3"
+    recreate: yes
+    image: "rabbitmq:3.5.3-management"
+    recreate: yes
+    links:
+      - rabbitmq1
+      - rabbitmq2
+    ports:
+      - "5674:5672"
+    networks:
+      - name: "rabbit_bridge"
+        ipv4_address: "172.20.0.4" 
+    env:
+      ERLANG_COOKIE: "abcdefg"
+      CLUSTER_WITH: "rabbitmq1"
