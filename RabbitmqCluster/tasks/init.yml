@@ -26,7 +26,7 @@
       - "25672:25672"
     networks:
       - name: "rabbit_bridge"
-        ipv4_address: "172.20.0.2"
+        ipv4_address: "{{ container_1_ip }}"
     env:
        RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
        RABBITMQ_DEFAULT_USER: "{{ DEFAULT_USER }}"
@@ -41,7 +41,7 @@
     image: "rabbitmq:3-management"
     networks:
       - name: "rabbit_bridge"
-        ipv4_address: "172.20.0.3"
+        ipv4_address: "{{ container_2_ip }}"
     env:
        RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
     volumes:
@@ -57,7 +57,7 @@
     image: "rabbitmq:3-management"
     networks:
       - name: "rabbit_bridge"
-        ipv4_address: "172.20.0.4"
+        ipv4_address: "{{ container_3_ip }}"
     env:
        RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
     volumes:

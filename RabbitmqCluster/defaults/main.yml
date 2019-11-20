@@ -8,6 +8,12 @@ bridge_name: redis_bridge
 bridge_subnet: 172.20.0.0/16
 bridge_gateway: 172.20.0.1
 
-ERLANG_COOKIE: 12345
-DEFAULT_USER: guest   
+#Containers network configuration
+container_1_ip: 172.20.0.2
+container_2_ip: 172.20.0.3
+container_3_ip: 172.20.0.4
+
+#RabbitMQ params
+ERLANG_COOKIE: "12345"
+DEFAULT_USER: guest
 DEFAULT_PASS: password

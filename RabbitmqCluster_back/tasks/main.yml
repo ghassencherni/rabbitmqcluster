@@ -1,5 +1,0 @@
----
-# tasks file for RedisCluster
-#  - include_tasks: reinit.yml
-  - include_tasks: init.yml
-#  - include_tasks: create_cluster.yml
