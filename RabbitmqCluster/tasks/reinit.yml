@@ -1,7 +1,18 @@
 ---
-- name: Delete RabbitmqCluster Compose
-  tasks:
-    - docker_compose:
-        project_src: RabbitmqCluster
-        state: absent
-      #ignore_errors: yes 
+- name: Delete Redis containers
+  docker_container:
+    name: "{{ item }}"
+    state: absent
+  ignore_errors: yes
+  with_items:
+     - "{{ container_1_name }}"
+     - "{{ container_2_name }}"
+     - "{{ container_3_name }}"
+
+
+- name: Delete RabbitMQ bridge
+  docker_network:
+    name: "{{ bridge_name }}"
+    state: absent
+    force: yes
+  ignore_errors: yes

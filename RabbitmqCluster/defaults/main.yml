@@ -1,19 +1,23 @@
 ---
-# defaults file for RedisCluster
+# defaults file for RabittCluster
 
 
 
 #Bridge network configuration
-bridge_name: redis_bridge
-bridge_subnet: 172.20.0.0/16
-bridge_gateway: 172.20.0.1
+bridge_name: "rabbitmq_bridge"
+bridge_subnet: "172.20.0.0/16"
+bridge_gateway: "172.20.0.1"
 
 #Containers network configuration
-container_1_ip: 172.20.0.2
-container_2_ip: 172.20.0.3
-container_3_ip: 172.20.0.4
+container_1_ip: "172.20.0.2"
+container_2_ip: "172.20.0.3"
+container_3_ip: "172.20.0.4"
+
+container_1_name: "rabbit1"
+container_2_name: "rabbit2"
+container_3_name: "rabbit3"
 
 #RabbitMQ params
 ERLANG_COOKIE: "12345"
-DEFAULT_USER: guest
-DEFAULT_PASS: password
+DEFAULT_USER: "guest"
+DEFAULT_PASS: "password"

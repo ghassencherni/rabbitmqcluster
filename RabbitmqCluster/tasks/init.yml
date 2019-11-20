@@ -2,19 +2,21 @@
 - name: Copy definitions.json file
   copy: src=cluster-entrypoint.sh  dest=/tmp/cluster-entrypoint.sh mode=0777
 
-# Network
-- name: Create redis bridge network
+
+# Network containers configuration
+- name: Create RabbitMQ bridge network
   docker_network:
-    name: "rabbit_bridge"
+    name: "{{ bridge_name }}"
     ipam_options:
       subnet: "{{ bridge_subnet }}"
       gateway: "{{ bridge_gateway }}"
 
+
 #Start one RabbitMQ 1
 - name: Start RabbitMQ1 container
   docker_container:
-    name: "rabbit1"
-    hostname: "rabbit1"
+    name: "{{ container_1_name }}"
+    hostname: "{{ container_1_name }}"
     recreate: yes
     image: "rabbitmq:3-management"
     ports:
@@ -25,7 +27,7 @@
       - "15672:15672"
       - "25672:25672"
     networks:
-      - name: "rabbit_bridge"
+      - name: "{{ bridge_name }}"
         ipv4_address: "{{ container_1_ip }}"
     env:
        RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
@@ -35,12 +37,12 @@
 
 - name: Start RabbitMQ2 container
   docker_container:
-    name: "rabbit2"
-    hostname: "rabbit2"
+    name: "{{ container_2_name }}"
+    hostname: "{{ container_2_name }}"
     recreate: yes
     image: "rabbitmq:3-management"
     networks:
-      - name: "rabbit_bridge"
+      - name: "{{ bridge_name }}"
         ipv4_address: "{{ container_2_ip }}"
     env:
        RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
@@ -51,12 +53,12 @@
 
 - name: Start RabbitMQ3 container
   docker_container:
-    name: "rabbit3"
-    hostname: "rabbit3"
+    name: "{{ container_3_name }}"
+    hostname: "{{ container_3_name }}"
     recreate: yes
     image: "rabbitmq:3-management"
     networks:
-      - name: "rabbit_bridge"
+      - name: "{{ bridge_name }}"
         ipv4_address: "{{ container_3_ip }}"
     env:
        RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
