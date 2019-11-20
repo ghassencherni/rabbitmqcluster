@@ -1,0 +1,7 @@
+---
+- name: Delete RabbitmqCluster Compose
+  tasks:
+    - docker_compose:
+        project_src: RabbitmqCluster
+        state: absent
+      #ignore_errors: yes 

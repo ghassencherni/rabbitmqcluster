@@ -1,6 +1,15 @@
 ---
+
+# Configuration
+- name: Create the conf file of each container
+  template: src=rabbitmq.config.j2  dest=/tmp/rabbitmq.config-{{ item }}
+  with_items:
+    - rabbit1
+    - rabbit2
+    - rabbit3
+
 - name: Copy definitions.json file
-  copy: src=cluster-entrypoint.sh  dest=/tmp/cluster-entrypoint.sh mode=0777
+  copy: src=definitions.json  dest=/tmp/definitions.json
 
 # Network
 - name: Create redis bridge network
@@ -14,7 +23,6 @@
 - name: Start RabbitMQ1 container
   docker_container:
     name: "rabbit1"
-    hostname: "rabbit1"
     recreate: yes
     image: "rabbitmq:3-management"
     ports:
@@ -27,39 +35,45 @@
     networks:
       - name: "rabbit_bridge"
         ipv4_address: "172.20.0.2"
+    volumes:
+      - /tmp/rabbitmq.config-rabbit1:/etc/rabbitmq/rabbitmq.config
+      - /tmp/definitions.json:/etc/rabbitmq/definitions.json
     env:
-       RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
-       RABBITMQ_DEFAULT_USER: "{{ DEFAULT_USER }}"
-       RABBITMQ_DEFAULT_PASS: "{{ DEFAULT_PASS }}"
-       RABBITMQ_DEFAULT_VHOST: "/"
+       RABBITMQ_ERLANG_COOKIE: "secret string"
+       RABBITMQ_NODENAME: "rabbit1"
 
 - name: Start RabbitMQ2 container
   docker_container:
     name: "rabbit2"
-    hostname: "rabbit2"
     recreate: yes
     image: "rabbitmq:3-management"
+    links:
+      - "rabbit1:rabbit1"
     networks:
       - name: "rabbit_bridge"
         ipv4_address: "172.20.0.3"
-    env:
-       RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
     volumes:
-      - /tmp/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
-    entrypoint: ["sh","/usr/local/bin/cluster-entrypoint.sh"] 
+      - /tmp/rabbitmq.config-rabbit2:/etc/rabbitmq/rabbitmq.config
+      - /tmp/definitions.json:/etc/rabbitmq/definitions.json
+    env:
+      RABBITMQ_ERLANG_COOKIE: "secret string"
+      RABBITMQ_NODENAME: "rabbit2"
 
 
 - name: Start RabbitMQ3 container
   docker_container:
     name: "rabbit3"
-    hostname: "rabbit3"
     recreate: yes
     image: "rabbitmq:3-management"
+    links:
+      - "rabbit1:rabbit1"
+      - "rabbit2:rabbit2"
     networks:
       - name: "rabbit_bridge"
         ipv4_address: "172.20.0.4"
-    env:
-       RABBITMQ_ERLANG_COOKIE: "{{ ERLANG_COOKIE }}"
     volumes:
-      - /tmp/cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
-    entrypoint: ["sh","/usr/local/bin/cluster-entrypoint.sh"]
+      - /tmp/rabbitmq.config-rabbit3:/etc/rabbitmq/rabbitmq.config
+      - /tmp/definitions.json:/etc/rabbitmq/definitions.json
+    env:
+      RABBITMQ_ERLANG_COOKIE: "secret string"
+      RABBITMQ_NODENAME: "rabbit3"
