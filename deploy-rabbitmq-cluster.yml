@@ -2,5 +2,5 @@
 - hosts: nodes
   become: yes
   roles:
-     #- geerlingguy.docker
+    - ansible-role-docker
     - RabbitmqCluster

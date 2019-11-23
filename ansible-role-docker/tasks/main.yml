@@ -1,0 +1,149 @@
+---
+- name: Copy certificates for Docker registries (if provided)
+  copy:
+    src: "{{ docker_ca_certificates_src_dir }}/{{ item }}"
+    dest: "{{ docker_ca_certificates_dst_dir }}/{{ item }}"
+    mode: 0644
+    owner: root
+    group: root
+  with_items:
+    - "{{ docker_ca_certificates }}"
+  when: docker_ca_certificates is defined
+  tags:
+    - docker
+    - docker-certificates
+
+- name: Update CA certificates
+  command: "update-ca-certificates"
+  when: docker_ca_certificates is defined
+  tags:
+    - docker
+    - docker-certificates
+
+- name: Create docker group
+  group:
+    name: "{{ docker_group }}"
+    gid: "{{ docker_gid }}"
+    state: present
+  tags:
+    - docker
+
+- name: Create docker user
+  user:
+    name: "{{ docker_user }}"
+    uid: "{{ docker_uid }}"
+    group: "{{ docker_group }}"
+    shell: /usr/sbin/nologin
+  tags:
+    - docker
+
+- name: Create download directory (used to store archives)
+  file:
+    path: "{{ docker_download_dir }}"
+    state: directory
+    mode: 0750
+  tags:
+    - docker
+
+- name: Register docker binary is installed
+  stat:
+    path: "{{ docker_bin_dir }}/docker"
+  register: docker_bin_stat
+  tags:
+    - docker
+
+- name: Downloading official Docker binaries archive
+  get_url:
+    url: "https://download.docker.com/linux/static/stable/x86_64/docker-{{ docker_version }}.tgz"
+    dest: "{{ docker_download_dir }}/docker-{{ docker_version }}.tgz"
+    mode: 0640
+  when: not docker_bin_stat.stat.exists or (upgrade_docker is defined and upgrade_docker == "true")
+  tags:
+    - docker
+
+- name: Unzip downloaded Docker archive
+  unarchive:
+    src: "{{ docker_download_dir }}/docker-{{ docker_version }}.tgz"
+    dest: "{{ docker_download_dir }}"
+    remote_src: yes
+  when: not docker_bin_stat.stat.exists or (upgrade_docker is defined and upgrade_docker == "true")
+  tags:
+    - docker
+
+- name: Remove binaries used in older Docker versions (<= 18.06.x)
+  file:
+    path: "{{ docker_bin_dir }}/{{ item }}"
+    state: absent
+  when: upgrade_docker is defined and upgrade_docker == "true"
+  with_items:
+    - docker-containerd-shim
+    - docker-containerd
+    - docker-proxy
+    - docker-containerd-ctr
+    - docker-runc
+  tags:
+    - docker
+
+- name: Copy Docker binaries to destination directory
+  copy:
+    src: "{{ docker_download_dir }}/docker/{{ item }}"
+    dest: "{{ docker_bin_dir }}/{{ item }}"
+    mode: 0755
+    owner: root
+    group: root
+    remote_src: yes
+  notify:
+    - restart docker
+  with_items:
+    - containerd
+    - containerd-shim
+    - ctr
+    - docker
+    - dockerd
+    - docker-init
+    - docker-proxy
+    - runc
+  tags:
+    - docker
+
+- name: Combine dockerd_settings and dockerd_settings_user (if defined)
+  set_fact:
+    dockerd_settings: "{{ dockerd_settings | combine(dockerd_settings_user|default({})) }}"
+  tags:
+    - docker
+
+- name: Create docker.socket systemd file
+  template:
+    src: etc/systemd/system/docker.socket.j2
+    dest: /etc/systemd/system/docker.socket
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart docker
+  tags:
+    - docker
+
+- name: Create docker.service systemd file
+  template:
+    src: etc/systemd/system/docker.service.j2
+    dest: /etc/systemd/system/docker.service
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - reload systemd
+    - restart docker
+  tags:
+    - docker
+
+- meta: flush_handlers
+
+- name: Enable and start Docker
+  service:
+    name: docker
+    enabled: yes
+    state: started
+  tags:
+    - docker
